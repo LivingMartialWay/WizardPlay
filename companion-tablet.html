@@ -1,3 +1,4 @@
+<!-- changed updated_at to created_at -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -441,9 +442,11 @@ async function poll() {
   try {
     const { data, error } = await db
       .from('Sessions')
-      .select('id, group_name, tv_status, updated_at')
+      .select('id, group_name, tv_status, created_at')
+      //.select('id, group_name, tv_status, updated_at')
       .in('tv_status', ['ready', 'playing', 'done'])
-      .order('updated_at', { ascending: false })
+      .order('created_at', { ascending: false })
+      //.order('updated_at', { ascending: false })
       .limit(20);
 
     if (error) throw error;
@@ -452,6 +455,7 @@ async function poll() {
     const ready   = (data || []).filter(s => s.tv_status === 'ready');
     const playing = (data || []).find(s => s.tv_status === 'playing');
     const done    = (data || []).filter(s => s.tv_status === 'done').slice(0, 5);
+
 
     isPlaying = !!playing;
     updateNowPlaying(playing);
@@ -507,7 +511,7 @@ function updateReadyList(sessions) {
         <div class="group-name">${esc(s.group_name)}</div>
         <div class="group-meta">
           <div class="group-meta-item"><span>⚜</span> Quest Complete</div>
-          <div class="group-meta-item">${timeAgo(s.updated_at)}</div>
+          <div class="group-meta-item">${timeAgo(s.created_at)}</div>  
         </div>
       </div>
       <button class="play-btn"
@@ -534,7 +538,7 @@ function updateRecentList(sessions) {
     card.innerHTML = `
       <div class="recent-name">${esc(s.group_name)}</div>
       <div style="display:flex;align-items:center;gap:12px;">
-        <div class="recent-time">${timeAgo(s.updated_at)}</div>
+        <div class="recent-time">${timeAgo(s.created_at)}</div>
         <div class="done-badge">✓ Done</div>
       </div>
     `;
@@ -599,8 +603,9 @@ function setOnline(online) {
 }
 
 function timeAgo(dateStr) {
+  
   if (!dateStr) return '';
-  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  const diff = Math.floor((Date.now() - new Date(dateStr.replace("+00:00", "Z"))) / 1000);
   if (diff < 60)   return 'just now';
   if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
   return Math.floor(diff / 3600) + 'h ago';
