@@ -1,4 +1,3 @@
-<!-- changed updated_at to created_at -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -335,6 +334,31 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── TV SELECTOR ── */
+    .tv-select-btn {
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 3px;
+      color: var(--cream-dim);
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tv-select-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .tv-select-btn.active {
+      background: rgba(201,168,76,0.15);
+      border-color: var(--gold);
+      color: var(--gold-light);
+    }
+
     /* ── TOAST ── */
     .toast {
       position: fixed; bottom: 24px; left: 50%;
@@ -367,6 +391,11 @@
   <div class="header-status">
     <div class="status-dot" id="status-dot"></div>
     <span id="status-text">Connected</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-left:16px;">
+    <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:1.5px;color:var(--cream-dim);text-transform:uppercase;">TV:</span>
+    <button class="tv-select-btn active" id="btn-tv1" onclick="selectTV('tv1')">🏰 Venue</button>
+    <button class="tv-select-btn" id="btn-tv2" onclick="selectTV('tv2')">🧪 Test</button>
   </div>
 </div>
 
@@ -433,6 +462,7 @@ const POLL_MS = 4000;
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
+let selectedTV      = 'tv1';   // Default to venue TV
 let isPlaying       = false;
 let pendingSessionId   = null;
 let pendingGroupName   = null;
@@ -442,11 +472,9 @@ async function poll() {
   try {
     const { data, error } = await db
       .from('Sessions')
-      .select('id, group_name, tv_status, created_at')
-      //.select('id, group_name, tv_status, updated_at')
+      .select('id, group_name, tv_status, updated_at')
       .in('tv_status', ['ready', 'playing', 'done'])
-      .order('created_at', { ascending: false })
-      //.order('updated_at', { ascending: false })
+      .order('updated_at', { ascending: false })
       .limit(20);
 
     if (error) throw error;
@@ -455,7 +483,6 @@ async function poll() {
     const ready   = (data || []).filter(s => s.tv_status === 'ready');
     const playing = (data || []).find(s => s.tv_status === 'playing');
     const done    = (data || []).filter(s => s.tv_status === 'done').slice(0, 5);
-
 
     isPlaying = !!playing;
     updateNowPlaying(playing);
@@ -511,7 +538,7 @@ function updateReadyList(sessions) {
         <div class="group-name">${esc(s.group_name)}</div>
         <div class="group-meta">
           <div class="group-meta-item"><span>⚜</span> Quest Complete</div>
-          <div class="group-meta-item">${timeAgo(s.created_at)}</div>  
+          <div class="group-meta-item">${timeAgo(s.updated_at)}</div>
         </div>
       </div>
       <button class="play-btn"
@@ -538,7 +565,7 @@ function updateRecentList(sessions) {
     card.innerHTML = `
       <div class="recent-name">${esc(s.group_name)}</div>
       <div style="display:flex;align-items:center;gap:12px;">
-        <div class="recent-time">${timeAgo(s.created_at)}</div>
+        <div class="recent-time">${timeAgo(s.updated_at)}</div>
         <div class="done-badge">✓ Done</div>
       </div>
     `;
@@ -603,9 +630,8 @@ function setOnline(online) {
 }
 
 function timeAgo(dateStr) {
-  
   if (!dateStr) return '';
-  const diff = Math.floor((Date.now() - new Date(dateStr.replace("+00:00", "Z"))) / 1000);
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
   if (diff < 60)   return 'just now';
   if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
   return Math.floor(diff / 3600) + 'h ago';
