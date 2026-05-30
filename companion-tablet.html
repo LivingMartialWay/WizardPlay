@@ -918,6 +918,13 @@ async function checkPin() {
   }
 }
 
+// ── HELPERS (TV label) ───────────────────────────────────────────────────────
+function updateTVLabel() {
+  const label = selectedTV === 'tv1' ? '🏰 Venue' : '🧪 Test';
+  const el = document.getElementById('tv-label');
+  if (el) el.textContent = '📺 ' + label;
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 updateTVLabel();
 poll();
