@@ -882,19 +882,20 @@ async function checkPin() {
     updatePinDots();
     return;
   }
+  // Capture before closePinPopup clears it
+  const sessionToReset = recentSessionToReset;
   closePinPopup();
 
-  if (recentSessionToReset !== null) {
+  if (sessionToReset !== null) {
     // Reset a done session back to ready
     showToast('Moving group back to queue…');
     try {
       const { error } = await db
         .from('Sessions')
         .update({ tv_status: 'ready', tv_id: null })
-        .eq('id', recentSessionToReset);
+        .eq('id', sessionToReset);
       if (error) throw error;
       showToast('✓ Group moved back to queue');
-      recentSessionToReset = null;
       await poll();
     } catch(e) {
       showToast('Error resetting — try again');
@@ -919,6 +920,45 @@ async function checkPin() {
 }
 
 // ── HELPERS (TV label) ───────────────────────────────────────────────────────
+let tvLabelTaps = 0;
+let tvLabelTimer = null;
+
+function initTVLabelTaps() {
+  const el = document.getElementById('tv-label');
+  if (!el) return;
+  el.addEventListener('click', function() {
+    tvLabelTaps++;
+    clearTimeout(tvLabelTimer);
+    tvLabelTimer = setTimeout(() => { tvLabelTaps = 0; }, 2000);
+    if (tvLabelTaps >= 5) {
+      tvLabelTaps = 0;
+      openTVPopup();
+    }
+  });
+}
+
+function openTVPopup() {
+  const c1 = document.getElementById('choice-tv1');
+  const c2 = document.getElementById('choice-tv2');
+  if (c1) c1.classList.toggle('selected', selectedTV === 'tv1');
+  if (c2) c2.classList.toggle('selected', selectedTV === 'tv2');
+  document.getElementById('tv-select-popup').classList.add('active');
+}
+
+function closeTVPopup() {
+  document.getElementById('tv-select-popup').classList.remove('active');
+}
+
+function selectTV(tvId) {
+  selectedTV = tvId;
+  localStorage.setItem('wq_tv_id', tvId);
+  updateTVLabel();
+  closeTVPopup();
+  const label = tvId === 'tv1' ? '🏰 Venue' : '🧪 Test';
+  showToast('TV set to: ' + label);
+  poll();
+}
+
 function updateTVLabel() {
   const label = selectedTV === 'tv1' ? '🏰 Venue' : '🧪 Test';
   const el = document.getElementById('tv-label');
@@ -927,6 +967,7 @@ function updateTVLabel() {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 updateTVLabel();
+initTVLabelTaps();
 poll();
 setInterval(poll, POLL_MS);
 </script>
