@@ -335,28 +335,144 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── TV SELECTOR ── */
-    .tv-select-btn {
-      padding: 6px 14px;
-      background: transparent;
-      border: 1px solid rgba(201,168,76,0.25);
-      border-radius: 3px;
-      color: var(--cream-dim);
+    .tv-select-popup {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 250;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .tv-select-popup.active { opacity: 1; pointer-events: auto; }
+    .tv-select-box {
+      background: var(--brown-panel);
+      border: 1px solid rgba(201,168,76,0.35);
+      border-radius: 4px;
+      padding: 32px 36px;
+      text-align: center;
+      min-width: 320px;
+    }
+    .tv-select-box-title {
       font-family: 'Cinzel', serif;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      text-transform: uppercase;
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 2px; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 20px;
+    }
+    .tv-choice-btn {
+      display: block; width: 100%;
+      padding: 14px;
+      margin-bottom: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 3px;
+      color: var(--cream);
+      font-family: 'Cinzel', serif;
+      font-size: 13px; font-weight: 600;
+      letter-spacing: 1.5px; text-transform: uppercase;
       cursor: pointer;
       transition: all 0.2s;
     }
-    .tv-select-btn:hover {
-      border-color: var(--gold);
-      color: var(--gold);
+    .tv-choice-btn:hover {
+      border-color: var(--gold); color: var(--gold);
+      background: rgba(201,168,76,0.08);
     }
-    .tv-select-btn.active {
+    .tv-choice-btn.selected {
+      border-color: var(--gold);
       background: rgba(201,168,76,0.15);
+      color: var(--gold-light);
+    }
+    .tv-choice-cancel {
+      margin-top: 8px;
+      font-size: 12px; color: var(--cream-dim);
+      cursor: pointer; font-style: italic;
+    }
+    .tv-choice-cancel:hover { color: var(--cream); }
+
+    /* ── PIN POPUP ── */
+    .pin-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 300;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .pin-overlay.active { opacity: 1; pointer-events: auto; }
+
+    .pin-popup {
+      background: var(--brown-panel);
+      border: 1px solid rgba(201,168,76,0.35);
+      border-radius: 4px;
+      padding: 36px 40px;
+      max-width: 420px; width: 90%;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(0,0,0,0.8);
+      transform: scale(0.95);
+      transition: transform 0.25s ease;
+      position: relative;
+    }
+    .pin-overlay.active .pin-popup { transform: scale(1); }
+    .pin-popup::before, .pin-popup::after {
+      content: ''; position: absolute;
+      width: 24px; height: 24px;
+      border-color: var(--gold-dark); border-style: solid; opacity: 0.5;
+    }
+    .pin-popup::before { top:6px; left:6px; border-width: 1px 0 0 1px; }
+    .pin-popup::after  { bottom:6px; right:6px; border-width: 0 1px 1px 0; }
+
+    .pin-title {
+      font-family: 'Cinzel', serif;
+      font-size: 13px; font-weight: 600;
+      letter-spacing: 2px; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 20px;
+    }
+    .pin-dots {
+      display: flex; justify-content: center; gap: 12px;
+      margin-bottom: 24px;
+    }
+    .pin-dot {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid rgba(201,168,76,0.4);
+      background: transparent;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .pin-dot.filled {
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+    .pin-keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .pin-key {
+      padding: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 3px;
+      color: var(--cream);
+      font-family: 'Cinzel', serif;
+      font-size: 20px; font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pin-key:hover {
+      background: rgba(201,168,76,0.1);
       border-color: var(--gold);
       color: var(--gold-light);
+    }
+    .pin-key.wide {
+      grid-column: span 3;
+      font-size: 12px; letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 12px;
+      color: var(--cream-dim);
+    }
+    .pin-error {
+      font-size: 13px; color: var(--red-err);
+      font-style: italic; min-height: 20px;
+      margin-bottom: 8px;
     }
 
     /* ── TOAST ── */
@@ -392,10 +508,9 @@
     <div class="status-dot" id="status-dot"></div>
     <span id="status-text">Connected</span>
   </div>
-  <div style="display:flex;align-items:center;gap:8px;margin-left:16px;">
+  <div style="display:flex;align-items:center;gap:8px;margin-left:16px;" id="tv-indicator">
     <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:1.5px;color:var(--cream-dim);text-transform:uppercase;">TV:</span>
-    <button class="tv-select-btn active" id="btn-tv1" onclick="selectTV('tv1')">🏰 Venue</button>
-    <button class="tv-select-btn" id="btn-tv2" onclick="selectTV('tv2')">🧪 Test</button>
+    <span id="tv-label" style="font-family:'Cinzel',serif;font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;cursor:pointer;padding:6px 14px;border:1px solid rgba(201,168,76,0.3);border-radius:3px;">🏰 Venue</span>
   </div>
 </div>
 
@@ -449,6 +564,44 @@
   </div>
 </div>
 
+<!-- TV SELECT POPUP -->
+<div class="tv-select-popup" id="tv-select-popup">
+  <div class="tv-select-box">
+    <div class="tv-select-box-title">📺 Select TV</div>
+    <button class="tv-choice-btn" id="choice-tv1" onclick="selectTV('tv1')">🏰 Venue TV</button>
+    <button class="tv-choice-btn" id="choice-tv2" onclick="selectTV('tv2')">🧪 Test TV</button>
+    <div class="tv-choice-cancel" onclick="closeTVPopup()">Cancel</div>
+  </div>
+</div>
+
+<!-- PIN POPUP -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-popup">
+    <div class="pin-title">⚔ Staff Access</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key" onclick="pinBackspace()">⌫</button>
+      <button class="pin-key wide" onclick="closePinPopup()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -462,7 +615,7 @@ const POLL_MS = 4000;
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-let selectedTV      = 'tv1';   // Default to venue TV
+let selectedTV      = localStorage.getItem('wq_tv_id') || 'tv1';
 let isPlaying       = false;
 let pendingSessionId   = null;
 let pendingGroupName   = null;
@@ -562,6 +715,8 @@ function updateRecentList(sessions) {
   sessions.forEach(s => {
     const card = document.createElement('div');
     card.className = 'recent-card';
+    card.setAttribute('data-session-id', s.id);
+    card.setAttribute('data-tap-count', '0');
     card.innerHTML = `
       <div class="recent-name">${esc(s.group_name)}</div>
       <div style="display:flex;align-items:center;gap:12px;">
@@ -569,6 +724,21 @@ function updateRecentList(sessions) {
         <div class="done-badge">✓ Done</div>
       </div>
     `;
+    // 5-tap to reset
+    let cardTapTimer = null;
+    card.addEventListener('click', function() {
+      let taps = parseInt(this.getAttribute('data-tap-count')) + 1;
+      this.setAttribute('data-tap-count', taps);
+      clearTimeout(cardTapTimer);
+      cardTapTimer = setTimeout(() => {
+        this.setAttribute('data-tap-count', '0');
+      }, 2000);
+      if (taps >= 5) {
+        this.setAttribute('data-tap-count', '0');
+        recentSessionToReset = s.id;
+        openPinPopup();
+      }
+    });
     list.appendChild(card);
   });
 }
@@ -652,7 +822,104 @@ function esc(s) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── HIDDEN RESET (5-tap PIN) ────────────────────────────────────────────────────
+const STAFF_PIN = '2468';
+let tapCount = 0;
+let recentSessionToReset = null;  // session id to reset from recently played
+let tapTimer = null;
+let pinEntry = '';
+
+// Attach 5-tap listener to now-playing banner
+document.getElementById('now-playing-banner').addEventListener('click', function() {
+  tapCount++;
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
+  if (tapCount >= 5) {
+    tapCount = 0;
+    openPinPopup();
+  }
+});
+
+function openPinPopup() {
+  pinEntry = '';
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('pin-overlay').classList.add('active');
+}
+
+function closePinPopup() {
+  pinEntry = '';
+  recentSessionToReset = null;
+  updatePinDots();
+  document.getElementById('pin-overlay').classList.remove('active');
+}
+
+function pinKey(digit) {
+  if (pinEntry.length >= 4) return;
+  pinEntry += digit;
+  updatePinDots();
+  if (pinEntry.length === 4) {
+    setTimeout(checkPin, 200);
+  }
+}
+
+function pinBackspace() {
+  pinEntry = pinEntry.slice(0, -1);
+  updatePinDots();
+}
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('pd' + i);
+    dot.classList.toggle('filled', i < pinEntry.length);
+  }
+}
+
+async function checkPin() {
+  if (pinEntry !== STAFF_PIN) {
+    document.getElementById('pin-error').textContent = 'Incorrect PIN — try again';
+    pinEntry = '';
+    updatePinDots();
+    return;
+  }
+  closePinPopup();
+
+  if (recentSessionToReset !== null) {
+    // Reset a done session back to ready
+    showToast('Moving group back to queue…');
+    try {
+      const { error } = await db
+        .from('Sessions')
+        .update({ tv_status: 'ready', tv_id: null })
+        .eq('id', recentSessionToReset);
+      if (error) throw error;
+      showToast('✓ Group moved back to queue');
+      recentSessionToReset = null;
+      await poll();
+    } catch(e) {
+      showToast('Error resetting — try again');
+      console.error(e);
+    }
+  } else {
+    // Reset currently playing session
+    showToast('Resetting TV status…');
+    try {
+      const { error } = await db
+        .from('Sessions')
+        .update({ tv_status: 'ready', tv_id: null })
+        .eq('tv_status', 'playing');
+      if (error) throw error;
+      showToast('✓ Reset — group back in queue');
+      await poll();
+    } catch(e) {
+      showToast('Error resetting — try again');
+      console.error(e);
+    }
+  }
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
+updateTVLabel();
 poll();
 setInterval(poll, POLL_MS);
 </script>
