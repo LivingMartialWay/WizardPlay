@@ -696,10 +696,13 @@ function updateReadyList(sessions) {
       </div>
       <button class="play-btn"
               ${isPlaying ? 'disabled' : ''}
-              onclick="requestPlay('${s.id}', '${esc(s.group_name)}')">
+              data-session-id="${s.id}">
         ▶ Watch Results
       </button>
     `;
+    card.querySelector('.play-btn').addEventListener('click', function() {
+      if (!isPlaying) requestPlay(s.id, s.group_name);
+    });
     list.appendChild(card);
   });
 }
